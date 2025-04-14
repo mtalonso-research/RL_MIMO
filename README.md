@@ -16,7 +16,36 @@ Lowering the number and resolution of the ADCs naturally reduces the communicati
 
 ## 📁 Repository Structure
 
-quantized-mi/ ├── experiments/ # Jupyter notebooks to run training and evaluation │ ├── plotting_simulations.ipynb │ ├── simulation-runner.ipynb │ ├── training_cortical.ipynb │ └── training_policies.ipynb ├── figures/ # PDF/PNG figures used in README or paper ├── simulation_results/ # Output from experiments │ ├── 1D/ # MI results and configurations for 1D setups │ ├── 2D/ # MI results and configurations for 2D setups │ └── H/ # Saved channel matrices for reproducibility ├── src/ # Core source code │ ├── ba_estimator.py # Blahut-Arimoto mutual information estimator │ ├── channel.py # Channel model with static and dynamic CSI │ ├── cortical_estimator.py # CORTICAL MI estimator │ ├── rl_environment.py # Environment setup for RL training │ ├── rl_policy.py # Policy and unified policy definitions │ ├── simulation_runner.py # Wrapper for training and testing loops │ └── utils.py # Helper functions (quantization, logging, etc.) ├── requirements.txt # Python dependencies ├── README.md # Project overview and instructions 
+cat << 'EOF' >> README.md
+
+## 📁 Repository Structure
+
+\`\`\`
+quantized-mi/
+├── experiments/                # Jupyter notebooks to run training and evaluation
+│   ├── plotting_simulations.ipynb
+│   ├── simulation-runner.ipynb
+│   ├── training_cortical.ipynb
+│   └── training_policies.ipynb
+├── figures/                    # PDF/PNG figures used in README or paper
+├── simulation_results/         # Output from experiments
+│   ├── 1D/                     # MI results and configurations for 1D setups
+│   ├── 2D/                     # MI results and configurations for 2D setups
+│   └── H/                      # Saved channel matrices for reproducibility
+├── src/                        # Core source code
+│   ├── ba_estimator.py         # Blahut-Arimoto mutual information estimator
+│   ├── channel.py              # Channel model with static and dynamic CSI
+│   ├── cortical_estimator.py   # CORTICAL MI estimator
+│   ├── rl_environment.py       # Environment setup for RL training
+│   ├── rl_policy.py            # Policy and unified policy definitions
+│   ├── simulation_runner.py    # Wrapper for training and testing loops
+│   └── utils.py                # Helper functions (quantization, logging, etc.)
+├── requirements.txt            # Python dependencies
+└── README.md                   # Project overview and instructions
+\`\`\`
+
+EOF
+
 ---
 
 ## 🚀 Quickstart
