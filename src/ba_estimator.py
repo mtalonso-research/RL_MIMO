@@ -19,10 +19,16 @@ from shapely.ops import polygonize, unary_union
 import plotly.express as px
 import itertools
 from shapely.geometry import Polygon, LineString, Point, box
+import sys
+import os
 warnings.filterwarnings('ignore')
+
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-from utils import create_dynamic_bounding_box
-from channel import Channel
+project_root = os.path.abspath("..")  
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+from src.utils import create_dynamic_bounding_box
+from src.channel import Channel
 
 def BlahutArimoto(dimension, P_Y_g_X, P_X, quant_points, outer_iter=100, inner_iter=100, compute_cost=True):
     device = P_Y_g_X.device

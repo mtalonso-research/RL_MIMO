@@ -17,10 +17,23 @@ import plotly.graph_objects as go
 from shapely.geometry import Polygon, LineString, Point, box
 from shapely.ops import polygonize, unary_union
 import plotly.express as px
-import itertools
+import sys
+import os
 from shapely.geometry import Polygon, LineString, Point, box
 warnings.filterwarnings('ignore')
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+project_root = os.path.abspath("..")  
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+from src.rl_environment import defining_environments
+
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed) 
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False 
 
 def create_dynamic_bounding_box(d, box_param):
     bounding_box = []
@@ -143,3 +156,32 @@ def all_regions_have_points(points, thresholds, dim):
 
     else:
         raise ValueError("Only 1D and 2D inputs are supported.")
+    
+def train_cases(dimension,num_thresholds,alphabet_size,box_param,num_envs,max_steps,patience,num_episodes,norm_patience,lr,mi_est,policy,run_id):
+    loss_history = {'lowSNR-thrsh':[],'midSNR-thrsh':[],'highSNR-thrsh':[],
+                    'lowSNR-qtpts':[],'midSNR-qtpts':[],'highSNR-qtpts':[]}
+    
+    print('---------Training Low SNR---------')
+    envs,_,_ = defining_environments(dimension,num_thresholds,alphabet_size,box_param,(-10.0,0.0),num_envs,max_steps,patience,mi_est,norm_patience,True,False)
+    loss_history['lowSNR-thrsh'] = policy.train_policies(num_episodes,num_envs,envs,(-10.0,0.0),'threshold',lr)
+    loss_history['lowSNR-qtpts'] = policy.train_policies(num_episodes,num_envs,envs,(-10.0,0.0),'point',lr)
+    print('----------------------------------')
+
+    print('---------Training Mid SNR---------')
+    envs,_,_ = defining_environments(dimension,num_thresholds,alphabet_size,box_param,(0.0,10.0),num_envs,max_steps,patience,mi_est,norm_patience,True,False)
+    loss_history['midSNR-thrsh'] = policy.train_policies(num_episodes,num_envs,envs,(0.0,10.0),'threshold',lr)
+    loss_history['midSNR-qtpts'] = policy.train_policies(num_episodes,num_envs,envs,(0.0,10.0),'point',lr)
+    print('----------------------------------')
+    
+    print('---------Training High SNR---------')
+    envs,_,_ = defining_environments(dimension,num_thresholds,alphabet_size,box_param,(10.0,20.0),num_envs,max_steps,patience,mi_est,norm_patience,True,False)
+    loss_history['highSNR-thrsh'] = policy.train_policies(num_episodes,num_envs,envs,(10.0,20.0),'threshold',lr)
+    loss_history['highSNR-qtpts'] = policy.train_policies(num_episodes,num_envs,envs,(10.0,20.0),'point',lr)
+    print('----------------------------------')
+
+    if type(mi_est).__name__ == 'MI_ESTIMATOR': mi_estimator = 'BA'
+    else: mi_estimator = 'CORTICAL'
+
+    torch.save(policy, f"./models/policy_models/unified_policy_{mi_estimator}-{dimension}D-{num_thresholds}-{run_id}.pth")
+    print('Saved Trained Policy Model')
+    return policy

@@ -19,10 +19,16 @@ from shapely.ops import polygonize, unary_union
 import plotly.express as px
 import itertools
 from shapely.geometry import Polygon, LineString, Point, box
+import sys
+import os
 warnings.filterwarnings('ignore')
+
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-from ba_estimator import MI_ESTIMATOR
-from utils import create_dynamic_bounding_box, all_regions_have_points, assigning_centroids, init_thresholds_2D
+project_root = os.path.abspath("..")  
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+from src.ba_estimator import MI_ESTIMATOR
+from src.utils import create_dynamic_bounding_box, all_regions_have_points, assigning_centroids, init_thresholds_2D
 
 class RLEnvironment:
     def __init__(self,dimension,initial_state,num_lines,num_points,box_param,max_steps,patience,mi_estimator,norm_patience,display_on=False):

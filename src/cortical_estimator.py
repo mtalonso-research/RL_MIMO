@@ -19,11 +19,17 @@ from shapely.ops import polygonize, unary_union
 import plotly.express as px
 import itertools
 from shapely.geometry import Polygon, LineString, Point, box
+import sys
+import os
 warnings.filterwarnings('ignore')
+
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-from utils import assigning_centroids
-from rl_environment import defining_environments
-from channel import Channel
+project_root = os.path.abspath("..")  
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+from src.utils import assigning_centroids
+from src.rl_environment import defining_environments
+from src.channel import Channel
 
 class Generator(nn.Module):
     def __init__(self, dimension, num_regions):
