@@ -22,9 +22,8 @@ import time
 import sys
 import os
 warnings.filterwarnings('ignore')
-
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-project_root = os.path.abspath("..")  
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 from src.rl_environment import RLEnvironment, defining_environments
@@ -96,9 +95,12 @@ def runing_sims(dimension,num_thresholds,alphabet_size,box_param,max_steps,patie
     else: mi_estimator = 'CORTICAL'
     channel_type = mi_est.channel.channel_type
     
-    np.savez(f"./numerical_results/{mi_estimator}-{dimension}D-{num_thresholds}-{run_id}-{channel_type}-{sim_count}.npz", 
-            SNR=list(mi_dict.keys()), MI=list(mi_dict.values()), Time=list(time_dict.values()), 
-            Steps=list(steps_dict.values()), State=list(state_dict.values()))
+    if channel_type == 'identity-csi':
+        np.savez(f"/simulation_results/{dimension}D/T{num_thresholds}/{mi_estimator}/{mi_estimator}-{dimension}D-{num_thresholds}-{run_id}-{channel_type}-{sim_count}.npz", 
+                SNR=list(mi_dict.keys()), MI=list(mi_dict.values()), Time=list(time_dict.values()), Steps=list(steps_dict.values()), State=list(state_dict.values()))
+    else:
+        np.savez(f"/simulation_results/H/T{num_thresholds}/{channel_type}/{mi_estimator}-{dimension}D-{num_thresholds}-{run_id}-{channel_type}-{sim_count}.npz", 
+                SNR=list(mi_dict.keys()), MI=list(mi_dict.values()), Time=list(time_dict.values()), Steps=list(steps_dict.values()), State=list(state_dict.values()))  
     
 def time_sharing(SNR_dB, Rate):
     Rate = Rate.copy()
@@ -131,6 +133,7 @@ def plot_snr_vs_mi_with_shaded_std(sim_folder, mi_estimators, dimensions, num_th
                                     run_ids, channel_types, sim_counts, num_std,
                                     style_mapping,
                                     suffix={'BA':'','CORTICAL':'','CORTICAL_BA':'','BruteForce':'','PSK':'','QUAM':''}):
+
     plt.figure(figsize=(7, 6))
     missing_files = []
 
@@ -215,8 +218,10 @@ def plot_snr_vs_mi_with_shaded_std(sim_folder, mi_estimators, dimensions, num_th
                 run_id_found = True
                 plotted_sim_counts += 1
             except:
-                if channel_type == 'identity-csi': filename = f"{sim_folder}/{dimension}D/T{num_thresholds}/{mi_estimator}/{mi_estimator}-{dimension}D-{num_thresholds}-{run_id}-{channel_type}-{sim_count}{suffix[mi_estimator]}.npz"
-                else: filename = f"{sim_folder}/H/T{num_thresholds}/{channel_type}/{mi_estimator}-{dimension}D-{num_thresholds}-{run_id}-{channel_type}-{sim_count}{suffix[mi_estimator]}.npz"
+                if channel_type == 'identity-csi': 
+                    filename = f"/{sim_folder}/{dimension}D/T{num_thresholds}/{mi_estimator}/{mi_estimator}-{dimension}D-{num_thresholds}-{run_id}-{channel_type}-{sim_count}{suffix[mi_estimator]}.npz"
+                else: 
+                    filename = f"/{sim_folder}/H/T{num_thresholds}/{channel_type}/{mi_estimator}-{dimension}D-{num_thresholds}-{run_id}-{channel_type}-{sim_count}{suffix[mi_estimator]}.npz"
                 try:
                     data = np.load(filename)
                     snr = data['SNR']
@@ -282,3 +287,32 @@ def plot_snr_vs_mi_with_shaded_std(sim_folder, mi_estimators, dimensions, num_th
     plt.legend(by_label.values(), by_label.keys(), fontsize='small', loc='best')
     plt.tight_layout()
     plt.show()
+
+def train_cases(dimension,num_thresholds,alphabet_size,box_param,num_envs,max_steps,patience,num_episodes,norm_patience,lr,mi_est,policy,run_id):
+    loss_history = {'lowSNR-thrsh':[],'midSNR-thrsh':[],'highSNR-thrsh':[],
+                    'lowSNR-qtpts':[],'midSNR-qtpts':[],'highSNR-qtpts':[]}
+    
+    print('---------Training Low SNR---------')
+    envs,_,_ = defining_environments(dimension,num_thresholds,alphabet_size,box_param,(-10.0,0.0),num_envs,max_steps,patience,mi_est,norm_patience,True,False)
+    loss_history['lowSNR-thrsh'] = policy.train_policies(num_episodes,num_envs,envs,(-10.0,0.0),'threshold',lr)
+    loss_history['lowSNR-qtpts'] = policy.train_policies(num_episodes,num_envs,envs,(-10.0,0.0),'point',lr)
+    print('----------------------------------')
+
+    print('---------Training Mid SNR---------')
+    envs,_,_ = defining_environments(dimension,num_thresholds,alphabet_size,box_param,(0.0,10.0),num_envs,max_steps,patience,mi_est,norm_patience,True,False)
+    loss_history['midSNR-thrsh'] = policy.train_policies(num_episodes,num_envs,envs,(0.0,10.0),'threshold',lr)
+    loss_history['midSNR-qtpts'] = policy.train_policies(num_episodes,num_envs,envs,(0.0,10.0),'point',lr)
+    print('----------------------------------')
+    
+    print('---------Training High SNR---------')
+    envs,_,_ = defining_environments(dimension,num_thresholds,alphabet_size,box_param,(10.0,20.0),num_envs,max_steps,patience,mi_est,norm_patience,True,False)
+    loss_history['highSNR-thrsh'] = policy.train_policies(num_episodes,num_envs,envs,(10.0,20.0),'threshold',lr)
+    loss_history['highSNR-qtpts'] = policy.train_policies(num_episodes,num_envs,envs,(10.0,20.0),'point',lr)
+    print('----------------------------------')
+
+    if type(mi_est).__name__ == 'MI_ESTIMATOR': mi_estimator = 'BA'
+    else: mi_estimator = 'CORTICAL'
+
+    torch.save(policy, f"./models/policy_models/unified_policy_{mi_estimator}-{dimension}D-{num_thresholds}-{run_id}.pth")
+    print('Saved Trained Policy Model')
+    return policy

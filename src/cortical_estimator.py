@@ -22,9 +22,8 @@ from shapely.geometry import Polygon, LineString, Point, box
 import sys
 import os
 warnings.filterwarnings('ignore')
-
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-project_root = os.path.abspath("..")  
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 from src.utils import assigning_centroids
