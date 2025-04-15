@@ -132,7 +132,7 @@ def time_sharing_iterative(SNR_dB, Rate):
 def plot_snr_vs_mi_with_shaded_std(sim_folder, mi_estimators, dimensions, num_thresholds_list,
                                     run_ids, channel_types, sim_counts, num_std,
                                     style_mapping,
-                                    suffix={'BA':'','CORTICAL':'','CORTICAL_BA':'','BruteForce':'','PSK':'','QUAM':''}):
+                                    suffix={'BA':'','CORTICAL':'','CORTICAL_BA':'','BruteForce':'','PSK':'','QAM':''}):
 
     plt.figure(figsize=(7, 6))
     missing_files = []
