@@ -7,6 +7,7 @@ This repository contains the official codebase for our paper:
 📄 **[Link to arxiv pre-print](https://arxiv.org/abs/your-paper-id)**
 
 **Abstract:**
+
 Multiple-input multiple-output (MIMO) wireless systems conventionally use high-resolution analog-to-digital converters (ADCs) at the receiver side to faithfully digitize received signals prior to digital signal processing. However, the power consumption of high-resolution ADCs increases significantly as the bandwidth is increased, particularly in millimeter wave communications systems. A combination of two mitigating approaches has been considered in the literature: i) to use hybrid beamforming to reduce the number of ADCs, and ii) to use low-resolution ADCs to reduce per ADC power consumption.
 Lowering the number and resolution of the ADCs naturally reduces the communication rate of the system, leading to a tradeoff between ADC power consumption and communication rate. Prior works have shown that optimizing over the hybrid beamforming matrix and ADC thresholds may reduce the aforementioned rate-loss significantly. A key challenge is the complexity of optimization over all choices of beamforming matrices and threshold vectors. This work proposes a reinforcement learning (RL) architecture to perform the optimization. The proposed approach integrates deep neural network-based mutual information estimators for reward calculation with policy gradient methods for reinforcement learning. The approach is robust to dynamic channel statistics and noisy CSI estimates. It is shown theoretically that greedy RL methods converge to the globally optimal policy. Extensive empirical evaluations are provided demonstrating that the performance of the proposed RL-based approach closely matches exhaustive search optimization across the solution space.
 
@@ -17,26 +18,36 @@ Lowering the number and resolution of the ADCs naturally reduces the communicati
 
 ```plaintext
 RL_MIMO/
-├── experiments/                      # Jupyter notebooks to run training and evaluation
+├── experiments_jupyter_notebooks/      # Jupyter notebooks used for experiments
 │   ├── plotting_simulations.ipynb
 │   ├── simulation-runner.ipynb
 │   ├── training_cortical.ipynb
 │   └── training_policies.ipynb
-├── figures/                          # PDF/PNG figures used in README or paper
-├── simulation_results/               # Output from experiments
-│   ├── 1D/                    
-│   ├── 2D/                    
-│   └── H/                     
-├── src/                              # Core source code
-│   ├── ba_estimator.py               # Blahut-Arimoto mutual information estimator
-│   ├── channel.py                    # Channel model with static and dynamic CSI
-│   ├── cortical_estimator.py         # CORTICAL MI estimator
-│   ├── rl_environment.py             # Environment setup for RL training
-│   ├── rl_policy.py                  # Policy and unified policy definitions
-│   ├── simulation_runner.py          # Wrapper for training and testing loops
-│   └── utils.py                      # Helper functions 
-├── requirements.txt                  # Python dependencies
-└── README.md                         # Project overview and information
+├── experiments_py/                    # Scripts for reproducible training, inference, and plotting
+│   ├── train_policy.py
+│   ├── train_cortical.py
+│   ├── run_simulations.py
+│   └── plot_results.py
+├── figures/                           # PDF/PNG figures for paper and README
+├── simulation_results/                # Saved output from simulations
+│   ├── 1D/                            
+│   ├── 2D/                            
+│   └── H/                             
+├── models/                            # Trained policies and CORTICAL estimators
+│   ├── policy_models/
+│   └── cortical_models/
+├── src/                               # Core source code
+│   ├── ba_estimator.py                # Blahut-Arimoto mutual information estimator
+│   ├── channel.py                     # Channel model 
+│   ├── cortical_estimator.py          # CORTICAL MI estimator
+│   ├── rl_environment.py              # Environment setup for RL training
+│   ├── rl_policy.py                   # Policy and unified policy definitions
+│   ├── simulation_runner.py           # Simulation functions
+│   ├── utils.py                       # Helper functions 
+├── functions.py                       # Legacy loader shim for model compatibility
+├── requirements.txt                   # Python dependencies
+└── README.md                          # Project overview and documentation
+
 ```
 
 ---
@@ -44,24 +55,127 @@ RL_MIMO/
 ## 🚀 Quickstart
 
 1. **Clone the repository**
+
+    ```bash
+    git clone https://github.com/mtemp009-2001/RL_MIMO.git
+    cd RL_MIMO
+    ```
+
 2. **Install dependencies**
-We recommend using a virtual environment.
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3. **Train a policy**
+
+You can either use the notebook:
+
+- `experiments_jupyter_notebooks/training_policies.ipynb`
+
+Or run from terminal using:
+
+```bash
+python experiments_py/train_policy.py \
+    --dimension 2 \
+    --num_thresholds 4 \
+    --mi_estimator BA \
+    --run_id run10
+```
+
+**Key arguments**:
+- `--dimension`: Input space dimension (1 or 2)
+- `--num_thresholds`: Number of quantization thresholds
+- `--mi_estimator`: Mutual information estimator to use (`BA` or `CORTICAL`)
+- `--run_id`: Identifier for saving the policy
+
+
+4. **Train a CORTICAL mutual information estimator**
+
+Via notebook:
+
+- `experiments/training_cortical.ipynb`
+
+Or from terminal:
+
+```bash
+python experiments_py/train_cortical.py \
+    --dimension 1 \
+    --num_thresholds 1 \
+    --epochs 100 \
+    --subepochs 10 \
+    --verbose 1
+```
+
+**Key arguments**:
+- `--sample_size`, `--num_batches`: Size of training batches and count
+- `--epochs`, `--subepochs`: Training length and resolution
+- `--dimension`, `--num_thresholds`: Match the downstream use case
+- `--save_path`: Directory to save trained models
+
+
+5. **Run inference simulations using a trained policy**
+
+From notebook:
+
+- `experiments/simulation-runner.ipynb`
+
+Or from terminal:
+
+```bash
+python experiments_py/run_simulations.py \
+    --dimension 2 \
+    --num_thresholds 4 \
+    --mi_estimator BA \
+    --channel_type identity-csi \
+    --run_id run10 \
+    --num_sims 10 \
+    --box_param 1.5
+```
+
+**Key arguments**:
+- `--channel_type`: One of `identity-csi`, `noisy-csi-0.05`, `changing-csi-smooth-0.05`, etc.
+- `--num_sims`: Number of simulations to run
+- `--box_param`: Bounding box range for input and output values
+
+Ensure your trained policy is saved under:
+
+```
+models/policy_models/unified_policy_{estimator}-{dimension}D-{num_thresholds}-{run_id}.pth
+```
+
+6. **Plot mutual information vs SNR curves**
+
+From notebook:
+
+- `experiments/plotting_simulations.ipynb`
+
+Or from terminal:
+
+```bash
+python experiments_py/plot_results.py \
+    --dimensions=2 \
+    --num_thresholds_list=4 \
+    --mi_estimators=BA \
+    --channel_types=identity-csi \
+    --run_ids=run10 \
+    --sim_counts=0,1,2,3,4,5,6,7,8,9
+```
+
+**Key arguments**:
+- `--dimensions`: One or more input dimensions (comma-separated)
+- `--num_thresholds_list`: Threshold configs to compare
+- `--mi_estimators`: Estimators to plot (`BA`, `CORTICAL`, etc.)
+- `--run_ids`: Identifiers used during training
+- `--channel_types`: Channels to include
+- `--sim_counts`: Which simulation files to aggregate
+- `--num_std`: Width of shaded confidence band (in std dev)
+
+By default, the script will open the plot in a window. You can modify it to save to file if desired.
+
+
+7. **Legacy compatibility**
+
+If loading archived models used in the paper, ensure the file `src/functions.py` exists and matches the original class definitions used during saving. This file is included for backward compatibility and should not be used in new development.
 
 ---
-
-## 📖 Citation
-
-If you use this code in your research, please cite:
-
-
----
-
-## 🪪 License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙋 Contact
-
-For questions or collaborations, feel free to reach out via your-email@example.com or open an issue.
