@@ -94,7 +94,7 @@ python experiments_py/train_policy.py \
 
 Via notebook:
 
-- `experiments/training_cortical.ipynb`
+- `experiments_jupyter_notebooks/training_cortical.ipynb`
 
 Or from terminal:
 
@@ -109,16 +109,15 @@ python experiments_py/train_cortical.py \
 
 **Key arguments**:
 - `--sample_size`, `--num_batches`: Size of training batches and count
-- `--epochs`, `--subepochs`: Training length and resolution
+- `--epochs`, `--subepochs`: Number of epochs for overall model and subepochs for Discriminator
 - `--dimension`, `--num_thresholds`: Match the downstream use case
-- `--save_path`: Directory to save trained models
 
 
 5. **Run inference simulations using a trained policy**
 
 From notebook:
 
-- `experiments/simulation-runner.ipynb`
+- `experiments_jupyter_notebooks/simulation-runner.ipynb`
 
 Or from terminal:
 
@@ -134,21 +133,15 @@ python experiments_py/run_simulations.py \
 ```
 
 **Key arguments**:
-- `--channel_type`: One of `identity-csi`, `noisy-csi-0.05`, `changing-csi-smooth-0.05`, etc.
+- `--channel_type`: One of `identity-csi`, `noisy-csi-0.01`, `noisy-csi-0.05`, `noisy-csi-0.1`, `changing-csi-smooth-0.01`, or `changing-csi-smooth-0.05`.
 - `--num_sims`: Number of simulations to run
-- `--box_param`: Bounding box range for input and output values
-
-Ensure your trained policy is saved under:
-
-```
-models/policy_models/unified_policy_{estimator}-{dimension}D-{num_thresholds}-{run_id}.pth
-```
+- `--box_param`: Bounding box for determining centroids and bounding regions
 
 6. **Plot mutual information vs SNR curves**
 
 From notebook:
 
-- `experiments/plotting_simulations.ipynb`
+- `experiments_jupyter_notebooks/plotting_simulations.ipynb`
 
 Or from terminal:
 
@@ -165,17 +158,17 @@ python experiments_py/plot_results.py \
 **Key arguments**:
 - `--dimensions`: One or more input dimensions (comma-separated)
 - `--num_thresholds_list`: Threshold configs to compare
-- `--mi_estimators`: Estimators to plot (`BA`, `CORTICAL`, etc.)
+- `--mi_estimators`: Estimators to plot (`BA`, `CORTICAL`, can also include `BruteForce`, `PSK`, or `QUAM` for comparison)
 - `--run_ids`: Identifiers used during training
 - `--channel_types`: Channels to include
 - `--sim_counts`: Which simulation files to aggregate
 - `--num_std`: Width of shaded confidence band (in std dev)
 
-By default, the script will open the plot in a window. You can modify it to save to file if desired.
+By default, the script will open the plot in a window. Note that BruteForce, PSK, and QUAM all use the BA estimator (but without using the RL policies).
 
 
 7. **Legacy compatibility**
 
-If loading archived models used in the paper, ensure the file `src/functions.py` exists and matches the original class definitions used during saving. This file is included for backward compatibility and should not be used in new development.
+If loading archived models used in the paper, ensure the file `functions.py` exists. This file is included for backward compatibility and should not be used in new development.
 
 ---
