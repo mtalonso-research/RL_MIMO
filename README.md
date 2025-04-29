@@ -4,7 +4,7 @@ This repository contains the official codebase for our paper:
 
 **Deep Reinforcement Learning for MIMO Communication with Low-Resolution ADCs**
 
-📄 **[Link to arxiv pre-print]([https://arxiv.org/abs/your-paper-id](https://arxiv.org/abs/2504.18957))**
+📄 [Link to arXiv pre-print](https://arxiv.org/abs/2504.18957)
 
 **Abstract:**
 
